@@ -6,16 +6,28 @@ def Attack(plan, toons, cogs):
 
     def getAccuracy(gag):
         track = gag.getTrack()
-        targets = gag.getTargets()
+        target = gag.getTarget()
         # Special Cases
         if track == "trap" or (all([cog.isLured() for cog in targets]) and track in ["sound","throw","squirt"]):
             return 1
         if all([cog.isLured() for cog in targets]) and track == "drop":
             return 0
+
+        if gag.isGroupAttack():
+            targetLevel = max([cog.getLevel() for cog in cogs])
+            targetHits = max([cog.getHits() for cog in cogs])
+        elif gag.getTarget() is not None:
+            targetLevel = target.getLevel()
+            targetHits = target.getHits()
+        else:
+            targetLevel = 1
+            targetHits = 0
+
         baseAccuracy = gag.getAccuracy()
-        targetDefense = max(.02,.05*(max([cog.getLevel() for cog in targets])-1)) * int(track != "toon-up")
+        targetDefense = max(.02,.05*(targetLevel-1)) * int(track != "toon-up")
         lureRatio = sum([cog.isLured() for cog in cogs])/len(cogs) * int(track not in ["toon-up","lure","drop"])
-        stunBonus = .2*max([cog.getHits() for cog in targets])
+        stunBonus = .2*targetHits
+
         return min(.95, baseAccuracy - targetDefense + lureRatio + stunBonus)
 
     def UseGags(gags):
@@ -23,42 +35,45 @@ def Attack(plan, toons, cogs):
         def ToonUp(gags):
             for gag in gags:
                 if random.random() < getAccuracy(gag):
+                    # Toon-up provides stun for ALL cogs
                     for cog in cogs:
                         cog.addHits(1)
-                    if gag.multiTarget():
-                        for target in gag.getTargets():
-                            target.Heal(np.ceil(gag.getValue()/len(toons)))
+                    if gag.isGroupAttack():
+                        for toon in toons:
+                            toon.Heal(np.ceil(gag.getValue()/len(toons)))
                     else:
-                        gag.getTargets()[0].Heal(gag.getValue())
+                        gag.getTarget().Heal(gag.getValue())
 
         def Trap(gags):
             if len(gags)>1:
-                groupTrap = sum([gag.multiTarget() for gag in gags]) > 0
+                groupTrap = any([gag.isGroupAttack() for gag in gags])
                 if groupTrap:
                     print("All trap gags evaporated!")
                 else:
+                    # All traps are single attacks. Look for ones that conflict.
                     for cog in cogs:
-                        gagsTargetingCog = [gag for gag in gags if cog in gag.getTargets()]
+                        gagsTargetingCog = [gag for gag in gags if cog is gag.getTarget()]
                         if len(gagsTargetingCog) == 1:
                             cog.addHits(1)
-                            gagsTargetingCog[0].setTargets(None)
                             cog.setTrap(gagsTargetingCog[0])
                         else:
                             print("{} evaporated!".format(", ".join([gag.getName() for gag in gagsTargetingCog])))
 
         def Lure(gags):
-            groupLure = sum([gag.multiTarget() for gag in gags]) > 0
-            if groupLure:
-                accuracy = max([getAccuracy(gag) for gag in gags])
-                if random.random() < accuracy:
-                    for gag in gags:
-                        for target in gag.getTargets():
-                            target.addLureRounds(gag.getValue())
-            else:
-                for cog in cogs:
-                    gagsTargetingCog = [gag for gag in gags if cog in gag.getTargets()]
+            groupLure = any([gag.isGroupAttack() for gag in gags])
+            for cog in cogs:
+                gagsTargetingCog = [gag for gag in gags if cog is gag.getTarget()]
+                if groupLure:
+                    accuracy = max([getAccuracy(gag) for gag in gags])
+                else:
                     accuracy = max([getAccuracy(gag) for gag in gagsTargetingCog])
-                    if random.random() < accuracy:
+                if random.random() < accuracy:
+                    trap = cog.getTrap()
+                    if trap:
+                        cog.takeDamage(trap.getValue())
+                        cog.setTrap(None)
+                        cog.setLureRounds(0)
+                    else:
                         cog.addLureRounds(sum([gag.getValue() for gag in gagsTargetingCog]))
 
         def Sound(gags):
@@ -71,7 +86,7 @@ def Attack(plan, toons, cogs):
 
         def Throw(gags):
             for cog in cogs:
-                gagsTargetingCog = [gag for gag in gags if cog in gag.getTargets()]
+                gagsTargetingCog = [gag for gag in gags if cog is gag.getTarget()]
                 accuracy = max([getAccuracy(gag) for gag in gagsTargetingCog])
                 if random.random() < accuracy:
                     damage = sum([gag.getValue() for gag in gagsTargetingCog])
@@ -86,7 +101,7 @@ def Attack(plan, toons, cogs):
             for cog in cogs:
                 if cog.isLured():
                     continue
-                gagsTargetingCog = [gag for gag in gags if cog in gag.getTargets()]
+                gagsTargetingCog = [gag for gag in gags if cog is gag.getTarget()]
                 accuracy = max([getAccuracy(gag) for gag in gagsTargetingCog])
                 if random.random() < accuracy:
                     damage = sum([gag.getValue() for gag in gagsTargetingCog])

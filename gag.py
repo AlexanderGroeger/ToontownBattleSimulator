@@ -1,11 +1,19 @@
 class Gag:
-    def __init__(self,name = "", track = None,value = 0,accuracy = 0,targets = [], organic = False):
+    def __init__(self, name = "", track = None,
+        value = 0, accuracy = 0, hitsAll = False,
+        targets = None, organic = False, toon = None):
         self.name = name
         self.track = track
         self.value = value
         self.accuracy = accuracy
-        self.targets = targets
+        self.hitsAll = hitsAll
+        self.target = targets
         self.organic = organic
+        self.toon = toon
+
+    def __str__(self):
+        return str(self.__dict__)
+        # return ", ".join([str(obj) for obj in [self.getName(),self.getTrack(),self.getValue(),self.getAccuracy(),self.isGroupAttack()]])
 
     def getName(self):
         return self.name
@@ -14,19 +22,22 @@ class Gag:
         return self.track
 
     def getValue(self):
-        return self.value + max(1,int(.1*self.value)) * int(isOrganic())
+        return self.value + max(1,int(.1*self.value)) * int(self.isOrganic())
 
     def getAccuracy(self):
         return self.accuracy
 
-    def getTargets(self):
-        return self.targets
+    def getTarget(self):
+        return self.target
 
     def isOrganic(self):
         return self.organic
 
-    def multiTarget(self):
-        return len(getTargets())>1
+    def getToon(self):
+        return self.toon
+
+    def isGroupAttack(self):
+        return self.hitsAll
 
     def setName(self, name):
         self.name = name
@@ -36,3 +47,6 @@ class Gag:
 
     def setOrganic(self, organic = True):
         self.organic = organic
+
+    def setToon(self, toon = None):
+        self.toon = toon
