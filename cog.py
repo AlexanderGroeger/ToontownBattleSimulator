@@ -1,7 +1,7 @@
 class Cog:
     def __init__(self, level = 1, hp = None, lureRounds = 0, trap = None, hits = 0, version = 1):
         self.level = level
-        self.hp = (level+1)*(level+2) else hp if not hp
+        self.hp = (level+1)*(level+2) if not hp else hp
         self.lureRounds = lureRounds
         self.trap = trap
         self.hits = hits
@@ -26,7 +26,7 @@ class Cog:
         return self.version
 
     def isLured(self):
-        return lureRounds > 0
+        return self.lureRounds > 0
 
     def isTrapped(self):
         return not (self.Trap is None)
@@ -36,16 +36,19 @@ class Cog:
 
     def setLevel(self, level):
         self.level = max(0,level)
-        setHP(getHP())
+        self.setHP(self.getHP())
 
     def setHP(self, hp):
-        self.hp = max(0,min(hp,getMaxHP()))
+        self.hp = int(max(0,min(hp,self.getMaxHP())))
+
+    def takeDamage(self, hp):
+        self.setHP(self.getHP()-hp)
 
     def setLureRounds(self, rounds):
         self.lureRounds = max(0,rounds)
 
     def addLureRounds(self, rounds):
-        setLureRounds(getLureRounds()+rounds)
+        self.setLureRounds(self.getLureRounds()+rounds)
 
     def setTrap(self, trap):
         self.trap = trap
@@ -54,7 +57,7 @@ class Cog:
         self.hits = hits
 
     def addHits(self, hits):
-        setHits(getHits()+hits)
+        self.setHits(self.getHits()+hits)
 
     def setVersion(self,version):
         self.version = max(1,version)

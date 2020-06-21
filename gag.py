@@ -42,8 +42,8 @@ class Gag:
     def setName(self, name):
         self.name = name
 
-    def setTargets(self, targets = []):
-        self.targets = targets
+    def setTarget(self, target = None):
+        self.target = target
 
     def setOrganic(self, organic = True):
         self.organic = organic
