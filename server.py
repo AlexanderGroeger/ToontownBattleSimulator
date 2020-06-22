@@ -1,12 +1,12 @@
 import flask
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from data.gags import gagData
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
-
+print(app.instance_path)
 @app.route('/',methods=['GET'])
 def home():
-    return """<h1>Toontown Battle Simulator</h1><p>Work in progress.</p><img src="bugle.png" alt="Cake" width="128" height="128">"""
+    return render_template("mainpage.html")
 
 @app.route('/gags', methods=['GET'])
 def view_gags():
